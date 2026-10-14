@@ -4,6 +4,8 @@ Native Arch Linux packages for the Storytold creative suite and AI
 desktop applications. All supported apps and the Artcraft CLI are published
 together in a verified release.
 
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/137b235a-a4aa-45c2-b32c-9408983ac5df" />
+
 ```sh
 curl -fsSL https://github.com/zamkara/storytold/releases/latest/download/install.sh | bash
 artcraft -l
