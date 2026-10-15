@@ -35,3 +35,8 @@ increment pkgrel. Builds, caches and source archives remain disposable runner
 files, not repository content. The root contains LICENSE, .github, and the repository README.
 
 See [CLI usage](cli/README.md).
+
+FigCraft is built from `storytold/figcraft` as a native Arch Linux package, including
+its CLI, upstream desktop entry, icons, MIME associations and AppStream metadata.
+The shared builder pins its source revision and upstream font revision, verifies
+source checksums, and publishes it only as part of a complete validated suite.

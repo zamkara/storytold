@@ -80,5 +80,10 @@
     "display_name": "ArtCraft-X",
     "cli": false,
     "mime": false
+  },
+  "figcraft": {
+    "repo": "storytold/figcraft",
+    "description": "Native interface design and prototyping application",
+    "audio": false
   }
 }

@@ -11,7 +11,7 @@ class SuiteTests(unittest.TestCase):
         for name in names:(folder/name).write_text(name+' content')
         (folder/'upstream.json').write_text(json.dumps(state));names+=['upstream.json']
         (folder/'SHA256SUMS').write_text(''.join(hashlib.sha256((folder/name).read_bytes()).hexdigest()+'  '+name+'\n' for name in names))
-    def test_complete_suite_collects_all_eight_without_metadata_collisions(self):
+    def test_complete_suite_collects_all_registered_packages_without_metadata_collisions(self):
         with tempfile.TemporaryDirectory() as temp:
             root=pathlib.Path(temp);artifacts=root/'artifacts';artifacts.mkdir();out=root/'out';out.mkdir()
             for app in APPS:self.fixture(artifacts,app)
