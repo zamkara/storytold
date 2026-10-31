@@ -75,7 +75,39 @@ class UpdaterTests(unittest.TestCase):
             def command(args,**kwargs):
                 if args[0]=='cargo':return json.dumps({'packages':[{'name':'craft-update','manifest_path':str(root/'Cargo.toml'),'source':'git+https://github.com/storytold/craft-libs#locked'}]})
                 return real(args,**kwargs)
-            with patch('sys.argv',['patch_updater','--required']),patch.dict('os.environ',{'CARGO_HOME':str(home)}),patch.object(patch_updater.subprocess,'check_output',command):
+            with patch('sys.argv',['patch_updater','--required']),patch.dict('os.environ',{'CARGO_HOME':str(home)}),patch.object(patch_updater.subprocess,'check_output',command),patch.object(patch_updater,'invalidate_updater_cache') as invalidate:
                 patch_updater.main();first=(root/'src/lib.rs').read_text()
                 patch_updater.main();self.assertEqual((root/'src/lib.rs').read_text(),first)
+                self.assertEqual(invalidate.call_count,2)
             self.assertEqual((repo/'Cargo.lock').read_text(),'locked revision stays intact\n')
+
+    def test_cached_git_dependency_is_recompiled_after_updater_patch(self):
+        import contextlib,os,shutil
+        if not shutil.which('cargo'):self.skipTest('Cargo is needed for the compiled-cache regression')
+        with tempfile.TemporaryDirectory() as directory:
+            base=pathlib.Path(directory);repo=base/'dependency';app=base/'application'
+            for path in [repo/'src',app/'src']:path.mkdir(parents=True)
+            (repo/'Cargo.toml').write_text('[package]\nname="craft-update"\nversion="0.1.0"\nedition="2021"\n')
+            (repo/'src/lib.rs').write_text('pub fn bridge() -> &\'static str { "unpatched" }\n')
+            for args in [['init','-q'],['add','.'],['-c','user.name=Test','-c','user.email=test@example.invalid','commit','-qm','Fixture']]:
+                subprocess.run(['git','-C',str(repo),*args],check=True)
+            revision=subprocess.check_output(['git','-C',str(repo),'rev-parse','HEAD'],text=True).strip()
+            (app/'Cargo.toml').write_text('[package]\nname="cache-probe"\nversion="0.1.0"\nedition="2021"\n[dependencies]\ncraft-update={git="'+repo.as_uri()+'",rev="'+revision+'"}\n')
+            (app/'src/main.rs').write_text('fn main() { println!("{}", craft_update::bridge()); }\n')
+            env={'CARGO_HOME':str(base/'cargo'),'CARGO_TARGET_DIR':str(base/'target'),'ARTCRAFT_PACKAGE_BRIDGE':'/usr/lib/artcraft/package-bridge'}
+            with patch.dict(os.environ,env),contextlib.chdir(app):
+                # First populate the exact kind of immutable Git dependency cache used by CI.
+                subprocess.run(['cargo','build','--release','--quiet'],check=True,capture_output=True)
+                binary=base/'target/release/cache-probe'
+                self.assertEqual(subprocess.check_output([str(binary)],text=True).strip(),'unpatched')
+                checkout=next((base/'cargo/git/checkouts').glob('*/*/src/lib.rs'))
+                checkout.write_text('pub fn bridge() -> &\'static str { option_env!("ARTCRAFT_PACKAGE_BRIDGE").unwrap_or("unpatched") }\n')
+                subprocess.run(['cargo','build','--release','--locked','--offline','--quiet'],check=True,capture_output=True)
+                before=subprocess.check_output([str(binary)],text=True).strip()
+                print('Cached Git dependency before invalidation:',before)
+                patch_updater.invalidate_updater_cache()
+                subprocess.run(['cargo','build','--release','--locked','--offline','--quiet'],check=True,capture_output=True)
+                after=subprocess.check_output([str(binary)],text=True).strip()
+                print('Cached Git dependency after invalidation:',after)
+                self.assertEqual(after,env['ARTCRAFT_PACKAGE_BRIDGE'])
+                self.assertIn(env['ARTCRAFT_PACKAGE_BRIDGE'].encode(),binary.read_bytes())

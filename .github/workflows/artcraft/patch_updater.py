@@ -84,6 +84,13 @@ def transform_solid(update,install):
     return update,install
 
 
+def invalidate_updater_cache():
+    # Cargo treats Git dependencies as immutable: editing a checkout does not make
+    # an existing fingerprint stale. Remove this crate's compiled artifacts so
+    # Cargo recompiles it and its dependants with the injected code and env vars.
+    subprocess.run(['cargo','clean','--release','--locked','--offline','--package','craft-update'],check=True)
+
+
 def main():
     p=argparse.ArgumentParser();p.add_argument('--required',action='store_true');p.add_argument('--solidcraft',action='store_true');args=p.parse_args()
     if args.solidcraft:
@@ -114,5 +121,6 @@ def main():
         for name,text in zip(['lib.rs','self_update.rs'],changed):
             (root/'src'/name).write_text(text)
         print('Integrated locked updater:',item['source'])
+    invalidate_updater_cache()
 
 if __name__=='__main__':main()

@@ -88,3 +88,11 @@ ArtCraft Studio and ArtCraft-X have no upstream in-app updater in the inspected
 source; update them with `artcraft -u`. The unchanged upstream graphical launcher's
 own updater is also outside this bridge; update its package with
 `artcraft -u artcraft-launcher`.
+
+Cargo treats Git dependencies as immutable and can reuse their compiled artifacts
+even after an extracted checkout was patched. After transforming the locked
+updater, the build explicitly cleans only `craft-update` release artifacts before
+compilation. Other dependency caches are retained. The regression test first builds
+a pinned Git dependency, patches its cached source, and checks that the resulting
+executable uses the bridge after this invalidation. Package validation still rejects
+any application binary without the linked bridge path.
