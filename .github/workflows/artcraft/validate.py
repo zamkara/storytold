@@ -20,6 +20,10 @@ for name in required:
 for binary in binaries:
  result=subprocess.run(['ldd',str(binary)],capture_output=True,text=True)
  if result.returncode or 'not found' in result.stdout:raise SystemExit(f'Unresolved dependencies: {result.stdout}\n{result.stderr}')
+if state.get('package_updater'):
+ info=subprocess.check_output(['bsdtar','-xOf',str(package),'.PKGINFO'],text=True)
+ if 'depend = artcraft-package-bridge' not in info.splitlines():raise SystemExit('Missing native updater runtime dependency')
+ if b'/usr/lib/artcraft/package-bridge' not in binaries[0].read_bytes():raise SystemExit('Packaged app did not link the native updater bridge')
 state['package']=package.name
 (root/'upstream.json').write_text(json.dumps(state,indent=2)+'\n')
 files=[package,root/'PKGBUILD',root/'.SRCINFO',root/'upstream.json']

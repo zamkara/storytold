@@ -1,4 +1,5 @@
 mod catalog;
+mod gui;
 mod tui;
 
 use anyhow::{Context, Result, bail, ensure};
@@ -23,9 +24,12 @@ const MAX_PACKAGE: u64 = 2 * 1024 * 1024 * 1024;
 #[command(
     version = option_env!("ARTCRAFT_PKGVER").unwrap_or(env!("CARGO_PKG_VERSION")),
     about = "Install and update native Storytold applications on Arch Linux",
-    group(clap::ArgGroup::new("action").args(["list", "info", "install", "updates", "upgrade", "remove", "self_update", "bootstrap", "sync", "open", "tui"]))
+    group(clap::ArgGroup::new("action").args(["list", "info", "install", "updates", "upgrade", "remove", "self_update", "bootstrap", "sync", "open", "tui", "bridge_catalog"]))
 )]
 struct Cli {
+    /// Machine-readable catalog for packaged graphical updaters
+    #[arg(short = 'J', hide = true, value_name = "APP")]
+    bridge_catalog: Option<String>,
     /// Open the terminal interface
     #[arg(short = 't', long)]
     tui: bool,
@@ -489,6 +493,9 @@ fn pacman_with_feedback(arguments: &[String], feedback: Option<&dyn Feedback>) -
     if let Some(feedback) = feedback {
         return tui::transaction(arguments, feedback);
     }
+    if std::env::var_os("ARTCRAFT_GUI").as_deref() == Some(std::ffi::OsStr::new("1")) {
+        return gui::transaction(arguments);
+    }
     ensure!(
         Path::new("/etc/arch-release").exists(),
         "Artcraft installation requires Arch Linux or an Arch derivative such as Omarchy"
@@ -591,6 +598,9 @@ fn show_updates(supported: &BTreeSet<String>, catalog: &BTreeMap<String, Availab
 
 fn main_result() -> Result<()> {
     let cli = Cli::parse();
+    if let Some(name) = &cli.bridge_catalog {
+        return gui::catalog(name);
+    }
     let local_apps = catalog::installed_apps()?;
     let local_names: BTreeSet<String> = local_apps
         .keys()

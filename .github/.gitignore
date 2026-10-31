@@ -1,0 +1,4 @@
+workflows/artcraft/**/__pycache__/
+workflows/artcraft/__pycache__/
+workflows/artcraft/cli/target/
+workflows/.build/

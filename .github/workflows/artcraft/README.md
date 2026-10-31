@@ -46,3 +46,45 @@ SolidCraft is the community parametric 3D CAD application from
 application ID, desktop and MIME integration, exported icons, CLI compatibility
 shim and attribution notices. AniCraft is not registered while its repository
 has no source to build.
+
+
+ArtCraft Launcher is also built from `storytold/craft-launcher`, without source
+changes, as `artcraft-launcher`. It has no extra `-cli` binary and does not replace
+`artcraft`. Its fonts, asset attributions and restricted brand license are shipped
+with the package. Launch it with `artcraft-launcher` after installing it through
+`artcraft -i artcraft-launcher`.
+
+The upstream graphical launcher still uses upstream's catalog and install policy.
+It detects our installed packages through pacman but does not drive our release
+catalog. Use `artcraft` for this builder's installations and upgrades. Do not treat
+these two frontends as interchangeable. A modified launcher would require separate
+branding under upstream's brand license; this package preserves the original.
+
+## Native in-app updates
+
+The thirteen Craft editors using `craft-update`, plus SolidCraft's separate updater,
+use `/usr/lib/artcraft/package-bridge` for packaged Linux copies. Checks ask for
+packages actually published in our complete suite; they never offer an upstream
+binary that our builder has not released. Installation downloads and verifies the
+package without elevated rights, then requests polkit authorization for pacman.
+Cancellation or installation failure stays an error in the original update dialog.
+The existing application restart and unsaved-work handling are retained. Nothing
+writes a replacement executable directly into `/usr/bin`.
+
+Upgrade the manager first (`artcraft -U`), then the installed apps (`artcraft -u`)
+to acquire this integration. Older installed app binaries cannot be repaired by a
+manager-only update. New app packages depend on the manager's
+`artcraft-package-bridge` capability. Initial install and update remain explicitly
+user-triggered; no background privileged updater is installed.
+
+The locked Cargo dependency revision and lockfile are preserved. Each build applies
+a deterministic, fingerprinted transformation only to that job's private Cargo
+checkout. A source layout the transformation does not recognize fails the build.
+The transformation is downloaded from the exact builder commit and SHA-256 checked
+as a PKGBUILD source. SolidCraft is transformed in the disposable extracted source.
+No upstream source is tracked in this repository.
+
+ArtCraft Studio and ArtCraft-X have no upstream in-app updater in the inspected
+source; update them with `artcraft -u`. The unchanged upstream graphical launcher's
+own updater is also outside this bridge; update its package with
+`artcraft -u artcraft-launcher`.

@@ -32,6 +32,8 @@ class PlanningTests(unittest.TestCase):
         self.assertEqual(prepare.font_commit('repository: storytold/craft-fonts\nref: '+sha),sha)
         self.assertEqual(prepare.font_commit('CRAFT_FONTS_REF: '+sha+'\nrepository: storytold/craft-fonts\nref: ${{ env.CRAFT_FONTS_REF }}'),sha)
         self.assertEqual(prepare.font_commit(''),'')
+        self.assertEqual(prepare.font_commit('craft-fonts-ref: '+sha),sha)
+        with self.assertRaises(ValueError):prepare.font_commit('craft-fonts-ref: main')
         with self.assertRaises(ValueError):prepare.font_commit('repository: storytold/craft-fonts\nref: main')
 
     def test_changelog_preserves_upstream_commit_messages(self):

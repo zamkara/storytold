@@ -2,12 +2,12 @@ import json,pathlib,tempfile,unittest
 from unittest.mock import patch
 import registry,prepare
 class RegistryTests(unittest.TestCase):
-    def test_registry_contains_all_sixteen_upstream_apps(self):
+    def test_registry_contains_all_seventeen_upstream_apps(self):
         apps=registry.load_apps()
-        self.assertEqual(len(apps),16)
+        self.assertEqual(len(apps),17)
         self.assertNotIn('artcraft',apps)
         self.assertEqual(apps['artcraft-studio']['repo'],'storytold/artcraft')
-        self.assertNotIn('artcraft-launcher',apps)
+        self.assertEqual(apps['artcraft-launcher']['repo'],'storytold/craft-launcher')
         self.assertEqual(apps['figcraft']['repo'],'storytold/figcraft')
     def test_manager_name_is_reserved(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -51,7 +51,7 @@ class RegistryTests(unittest.TestCase):
             if path=='.github/workflows/release.yml':return 'repository: storytold/craft-fonts\nCRAFT_FONTS_REF: '+fonts
             if path=='packaging/linux/package.sh':return 'cargo build --release --locked'
             raise AssertionError(path)
-        with tempfile.TemporaryDirectory() as folder,patch('sys.argv',['prepare.py','figcraft','--directory',folder]),patch.object(prepare,'api',api),patch.object(prepare,'content',content),patch.object(prepare,'previous',return_value=None),patch.object(prepare,'download_archive',return_value=('source.tar.gz::https://example.com/source','c'*64)) as archive,patch.object(prepare,'notes',return_value='Upstream notes'),patch.object(prepare,'output'):
+        with patch.dict('os.environ',{'GITHUB_SHA':'d'*40}),patch.object(prepare,'request',return_value=b'# updater patch'),tempfile.TemporaryDirectory() as folder,patch('sys.argv',['prepare.py','figcraft','--directory',folder]),patch.object(prepare,'api',api),patch.object(prepare,'content',content),patch.object(prepare,'previous',return_value=None),patch.object(prepare,'download_archive',return_value=('source.tar.gz::https://example.com/source','c'*64)) as archive,patch.object(prepare,'notes',return_value='Upstream notes'),patch.object(prepare,'output'):
             prepare.main()
             recipe=(pathlib.Path(folder)/'PKGBUILD').read_text()
             state=json.loads((pathlib.Path(folder)/'upstream.json').read_text())
@@ -78,7 +78,7 @@ class SolidCraftTests(unittest.TestCase):
             if path=='packaging/env.sh':return 'APP_ID=io.tangencylabs.solidcraft\n'
             if path=='packaging/linux/package.sh':return 'cargo build --release --locked -p solidcraft -p solidcraft-cli'
             raise AssertionError(path)
-        with tempfile.TemporaryDirectory() as folder,patch('sys.argv',['prepare.py','solidcraft','--directory',folder]),patch.object(prepare,'api',api),patch.object(prepare,'content',content),patch.object(prepare,'previous',return_value=None),patch.object(prepare,'download_archive',return_value=('source.tar.gz::https://example.com/source','c'*64)) as archive,patch.object(prepare,'notes',return_value='Upstream notes'),patch.object(prepare,'output'):
+        with patch.dict('os.environ',{'GITHUB_SHA':'d'*40}),patch.object(prepare,'request',return_value=b'# updater patch'),tempfile.TemporaryDirectory() as folder,patch('sys.argv',['prepare.py','solidcraft','--directory',folder]),patch.object(prepare,'api',api),patch.object(prepare,'content',content),patch.object(prepare,'previous',return_value=None),patch.object(prepare,'download_archive',return_value=('source.tar.gz::https://example.com/source','c'*64)) as archive,patch.object(prepare,'notes',return_value='Upstream notes'),patch.object(prepare,'output'):
             prepare.main()
             recipe=(pathlib.Path(folder)/'PKGBUILD').read_text()
             state=json.loads((pathlib.Path(folder)/'upstream.json').read_text())

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 job_dir=$1
-pacman -Syu --noconfirm --needed rust python ca-certificates sudo
+pacman -Syu --noconfirm --needed rust python ca-certificates sudo polkit
 useradd --create-home --uid 1000 builder
 chown -R builder:builder "$job_dir"
 runuser -u builder -- bash -c 'cd "$1"; makepkg --cleanbuild --noconfirm; makepkg --printsrcinfo > .SRCINFO' bash "$job_dir"
@@ -15,7 +15,7 @@ package=packages[0]
 state=json.loads((root/'upstream.json').read_text());state['package']=package.name
 (root/'upstream.json').write_text(json.dumps(state,indent=2)+'\n')
 listing=subprocess.check_output(['bsdtar','-tf',str(package)],text=True).splitlines()
-for member in ['.PKGINFO','.BUILDINFO','usr/bin/artcraft','usr/share/licenses/artcraft/LICENSE']:
+for member in ['.PKGINFO','.BUILDINFO','usr/bin/artcraft','usr/lib/artcraft/package-bridge','usr/share/licenses/artcraft/LICENSE']:
  if member not in listing:raise SystemExit('Missing package member: '+member)
 result=subprocess.run(['ldd',str(root/'artcraft-linux-x86_64')],capture_output=True,text=True)
 if result.returncode or 'not found' in result.stdout:raise SystemExit('Unresolved Artcraft runtime dependencies')

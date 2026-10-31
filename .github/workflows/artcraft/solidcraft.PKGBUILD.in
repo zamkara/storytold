@@ -5,11 +5,13 @@ pkgrel=@PKGREL@
 pkgdesc=@DESCRIPTION@
 arch=('x86_64')
 url=@URL@
+provides=(@APP_ID@)
+conflicts=('@APP@-bin' '@APP@-git' @APP_ID@)
 license=('MIT' 'Apache-2.0'@FONT_LICENSE@)
 depends=('glibc' 'gcc-libs' 'libxkbcommon' 'libxkbcommon-x11' 'wayland'
          'libx11' 'libxcb' 'libxcursor' 'libxi' 'libxrandr' 'libglvnd'
-         'vulkan-icd-loader' 'xdg-desktop-portal'@AUDIO@)
-makedepends=('rust' 'git' 'pkgconf' 'cmake' 'clang' 'nasm' 'desktop-file-utils')
+         'vulkan-icd-loader' 'xdg-desktop-portal'@AUDIO@@PACKAGE_DEPENDENCY@)
+makedepends=('rust' 'git' 'pkgconf' 'cmake' 'clang' 'nasm' 'desktop-file-utils' 'python')
 optdepends=('vulkan-driver: hardware accelerated rendering')
 options=('!lto' '!debug')
 _commit=@SHA@
@@ -26,6 +28,7 @@ _build_env() {
   export CARGO_PROFILE_RELEASE_DEBUG=0
   # Avoid building for the runner CPU: the package must run on any x86_64 machine.
   export RUSTFLAGS='-C target-cpu=x86-64'
+@UPDATER_ENV@
   export @ENV_PREFIX@_BUILD_SHA="$_commit"
   export @ENV_PREFIX@_BUILD_DATE="$_build_date"
   export @ENV_PREFIX@_VERSION="$_upstream_version"
@@ -38,6 +41,7 @@ _build_env() {
 build() {
   cd "$srcdir/@SOURCE_DIR@-$_commit"
   _build_env
+@UPDATER_PATCH@
   cargo build --release --locked @CARGO_PACKAGES@@FEATURES@
 }
 

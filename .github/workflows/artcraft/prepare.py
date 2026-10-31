@@ -50,7 +50,7 @@ def recipe_hash(config=None):
     config=config or {}
     h=hashlib.sha256(json.dumps(config,sort_keys=True).encode())
     template={'tauri':'tauri.PKGBUILD.in','solidcraft':'solidcraft.PKGBUILD.in'}.get(config.get('kind'),'PKGBUILD.in')
-    for name in (template,'build.sh','validate.py'):
+    for name in (template,'build.sh','validate.py')+ (('patch_updater.py',) if config.get('package_updater') else ()):
         h.update(name.encode());h.update((HERE/name).read_bytes())
     return h.hexdigest()
 
@@ -67,6 +67,9 @@ def build_metadata(config,cargo,repo,sha):
     return str(cargo['workspace']['package']['version']),'ai.storyteller.'+binary,font_commit(content(repo,'.github/workflows/release.yml',sha))
 
 def font_commit(workflow):
+    shared=re.search(r'craft-fonts-ref:\s*[\'\"]?([0-9a-f]{40})',workflow)
+    if shared:return shared.group(1)
+    if 'craft-fonts-ref:' in workflow:raise ValueError('Upstream craft-fonts input must be pinned to a commit')
     if 'repository: storytold/craft-fonts' not in workflow:return ''
     match=re.search(r'CRAFT_FONTS_REF:\s*[\'"]?([0-9a-f]{40})',workflow)
     if not match:match=re.search(r'repository:\s*storytold/craft-fonts\s+ref:\s*[\'"]?([0-9a-f]{40})',workflow)
@@ -127,7 +130,7 @@ def main():
     info=api(f'repos/{repo}');commit=api(f'repos/{repo}/commits/{urllib.parse.quote(info["default_branch"],safe="")}')
     sha=commit['sha'];cargo=tomllib.loads(content(repo,'Cargo.toml',sha))
     version,app_id,fonts=build_metadata(config,cargo,repo,sha)
-    state={'app':args.app,'description':config['description'],'upstream':repo,'branch':info['default_branch'],'commit':sha,'version':version,'commit_date':commit['commit']['committer']['date'],'fonts_commit':fonts,'recipe_sha256':recipe_hash(config),'architecture':'x86_64','kind':config.get('kind','craft'),'binary':config.get('binary',args.app),'cli':config.get('cli',True),'mime':config.get('mime',True),'app_id':app_id}
+    state={'app':args.app,'description':config['description'],'upstream':repo,'branch':info['default_branch'],'commit':sha,'version':version,'commit_date':commit['commit']['committer']['date'],'fonts_commit':fonts,'recipe_sha256':recipe_hash(config),'architecture':'x86_64','kind':config.get('kind','craft'),'binary':config.get('binary',args.app),'cli':config.get('cli',True),'mime':config.get('mime',True),'app_id':app_id,'package_updater':bool(config.get('package_updater'))}
     old=previous(args.repository,args.app)
     if same_inputs(old,state):
         output({'changed':'false','app':args.app});return
@@ -138,6 +141,12 @@ def main():
     source,checksum=download_archive(repo,sha,directory,f'{args.app}-{sha}.tar.gz');sources.append(source);checksums.append(checksum)
     if fonts:
         source,checksum=download_archive('storytold/craft-fonts',fonts,directory,f'craft-fonts-{fonts}.tar.gz');sources.append(source);checksums.append(checksum)
+    if config.get('package_updater'):
+        builder_sha=os.environ.get('GITHUB_SHA','')
+        if not re.fullmatch(r'[a-f0-9]{40}',builder_sha):raise ValueError('Package updater requires a pinned builder GITHUB_SHA')
+        url=f'https://raw.githubusercontent.com/{args.repository}/{builder_sha}/.github/workflows/artcraft/patch_updater.py'
+        data=request(url);(directory/'patch_updater.py').write_bytes(data)
+        sources.append('patch_updater.py::'+url);checksums.append(hashlib.sha256(data).hexdigest())
     # Follow official build features without adding a distro-specific fork.
     linux_script=content(repo,'packaging/linux/package.sh',sha) if config.get('kind')!='tauri' else ''
     features=' --features heif' if '--features heif' in linux_script else ''
@@ -145,6 +154,9 @@ def main():
     binary=config.get('binary',args.app)
     replacements.update(
         SOURCE_DIR=repo.split('/')[-1], BINARY=binary, APP_ID=shlex.quote(app_id),
+        PACKAGE_DEPENDENCY=" 'artcraft-package-bridge'" if config.get('package_updater') else '',
+        UPDATER_ENV=('  export ARTCRAFT_PACKAGE_BRIDGE=/usr/lib/artcraft/package-bridge\n  export ARTCRAFT_PACKAGE_NAME='+shlex.quote(args.app)) if config.get('package_updater') else '',
+        UPDATER_PATCH=('  python "$srcdir/patch_updater.py" '+('--solidcraft' if config.get('package_updater')=='solidcraft' else '--required')) if config.get('package_updater') else '  :',
         CARGO_PACKAGES='-p '+shlex.quote(binary)+(' -p '+shlex.quote(binary+'-cli') if state['cli'] else ''),
         CLI_CHECK=f'  "$CARGO_TARGET_DIR/release/{binary}-cli" --version' if state['cli'] else '  :',
         CLI_INSTALL=f'  install -Dm755 "$CARGO_TARGET_DIR/release/{binary}-cli" "$pkgdir/usr/bin/{args.app}-cli"' if state['cli'] else '  :',

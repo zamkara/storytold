@@ -175,10 +175,13 @@ fn parse_installed(text: &str) -> BTreeMap<String, (String, App)> {
         };
         // Packages identify their real upstream in pacman's installed metadata;
         // this works offline, before the first catalog sync, and for future apps.
-        let Some(repo) = url.strip_prefix("https://github.com/storytold/") else {
+        let Some(repo) = url.strip_prefix("https://github.com/").filter(|repo| {
+            repo.starts_with("storytold/")
+                || (*name == "solidcraft" && *repo == "tangency-labs/solidcraft")
+        }) else {
             continue;
         };
-        if repo.is_empty() {
+        if repo == "storytold/" {
             continue;
         }
         result.insert(
@@ -186,7 +189,7 @@ fn parse_installed(text: &str) -> BTreeMap<String, (String, App)> {
             (
                 (*version).into(),
                 App {
-                    repo: format!("storytold/{repo}"),
+                    repo: repo.to_string(),
                     description: fields
                         .get("Description")
                         .copied()
@@ -287,5 +290,9 @@ mod tests {
         assert_eq!(found["future-tool"].0, "3.1-2");
         assert_eq!(found["future-tool"].1.repo, "storytold/future");
         assert!(parse_installed("").is_empty());
+        let community = parse_installed(
+            "Name : solidcraft\nVersion : 0.28.0-1\nURL : https://github.com/tangency-labs/solidcraft\n",
+        );
+        assert_eq!(community["solidcraft"].1.repo, "tangency-labs/solidcraft");
     }
 }

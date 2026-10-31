@@ -2,62 +2,74 @@
   "designcraft": {
     "repo": "storytold/designcraft",
     "description": "Native page layout and publishing application",
-    "audio": false
+    "audio": false,
+    "package_updater": true
   },
   "effectcraft": {
     "repo": "storytold/effectcraft",
     "description": "Native motion graphics and visual effects compositor",
-    "audio": true
+    "audio": true,
+    "package_updater": true
   },
   "pdfcraft": {
     "repo": "storytold/pdfcraft",
     "description": "Native PDF editor and document tools",
-    "audio": false
+    "audio": false,
+    "package_updater": true
   },
   "lightcraft": {
     "repo": "storytold/lightcraft",
     "description": "Native photo development and catalog application",
-    "audio": false
+    "audio": false,
+    "package_updater": true
   },
   "filmcraft": {
     "repo": "storytold/filmcraft",
     "description": "Native video editing application",
-    "audio": true
+    "audio": true,
+    "package_updater": true
   },
   "vectorcraft": {
     "repo": "storytold/vectorcraft",
     "description": "Native vector illustration application",
-    "audio": false
+    "audio": false,
+    "package_updater": true
   },
   "photocraft": {
     "repo": "storytold/photocraft",
     "description": "Native raster image editing application",
-    "audio": false
+    "audio": false,
+    "package_updater": true
   },
   "cadcraft": {
     "repo": "storytold/cadcraft",
     "description": "Native computer-aided design and drafting application",
-    "audio": false
+    "audio": false,
+    "package_updater": true
   },
   "deckcraft": {
     "repo": "storytold/deckcraft",
     "description": "Native presentation and slide-show application",
-    "audio": true
+    "audio": true,
+    "package_updater": true
   },
   "gridcraft": {
     "repo": "storytold/gridcraft",
     "description": "Native spreadsheet and data application",
-    "audio": false
+    "audio": false,
+    "package_updater": true
   },
   "soundcraft": {
     "repo": "storytold/soundcraft",
     "description": "Native audio recording, editing and mixing workstation",
-    "audio": true
+    "audio": true,
+    "package_updater": true
   },
   "wordcraft": {
     "repo": "storytold/wordcraft",
     "description": "Native word processing and document design application",
-    "audio": false
+    "audio": false,
+    "package_updater": true
   },
   "artcraft-studio": {
     "repo": "storytold/artcraft",
@@ -84,12 +96,23 @@
   "figcraft": {
     "repo": "storytold/figcraft",
     "description": "Native interface design and prototyping application",
-    "audio": false
+    "audio": false,
+    "package_updater": true
   },
   "solidcraft": {
     "repo": "tangency-labs/solidcraft",
     "description": "Native parametric 3D CAD application",
     "audio": false,
-    "kind": "solidcraft"
+    "kind": "solidcraft",
+    "package_updater": "solidcraft"
+  },
+  "artcraft-launcher": {
+    "repo": "storytold/craft-launcher",
+    "description": "ArtCraft Launcher graphical application manager",
+    "audio": false,
+    "binary": "artcraft-launcher",
+    "env_prefix": "ARTCRAFT_LAUNCHER",
+    "cli": false,
+    "mime": false
   }
 }

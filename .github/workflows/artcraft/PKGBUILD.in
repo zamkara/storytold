@@ -5,11 +5,13 @@ pkgrel=@PKGREL@
 pkgdesc=@DESCRIPTION@
 arch=('x86_64')
 url=@URL@
+provides=(@APP_ID@)
+conflicts=('@APP@-bin' '@APP@-git' @APP_ID@)
 license=('MIT' 'Apache-2.0'@FONT_LICENSE@)
 depends=('glibc' 'gcc-libs' 'libxkbcommon' 'libxkbcommon-x11' 'wayland'
          'libx11' 'libxcb' 'libxcursor' 'libxi' 'libxrandr' 'libglvnd'
-         'vulkan-icd-loader' 'xdg-desktop-portal'@AUDIO@)
-makedepends=('rust' 'git' 'pkgconf' 'cmake' 'clang' 'nasm' 'desktop-file-utils')
+         'vulkan-icd-loader' 'xdg-desktop-portal'@AUDIO@@PACKAGE_DEPENDENCY@)
+makedepends=('rust' 'git' 'pkgconf' 'cmake' 'clang' 'nasm' 'desktop-file-utils' 'python')
 optdepends=('vulkan-driver: hardware accelerated rendering')
 options=('!lto' '!debug')
 _commit=@SHA@
@@ -26,6 +28,7 @@ _build_env() {
   export CARGO_PROFILE_RELEASE_DEBUG=0
   # Avoid building for the runner CPU: the package must run on any x86_64 machine.
   export RUSTFLAGS='-C target-cpu=x86-64'
+@UPDATER_ENV@
   export @ENV_PREFIX@_BUILD_SHA="$_commit"
   export @ENV_PREFIX@_BUILD_DATE="$_build_date"
   export @ENV_PREFIX@_VERSION="$_upstream_version"
@@ -38,6 +41,7 @@ _build_env() {
 build() {
   cd "$srcdir/@SOURCE_DIR@-$_commit"
   _build_env
+@UPDATER_PATCH@
   cargo build --release --locked @CARGO_PACKAGES@@FEATURES@
 }
 
@@ -60,8 +64,14 @@ package() {
   sed -e "s/@VERSION@/$_upstream_version/g" -e "s/@DATE@/$_build_date/g" \
     "packaging/linux/$app_id.metainfo.xml.in" > "$pkgdir/usr/share/metainfo/$app_id.metainfo.xml"
   cp -a assets/app-icon/hicolor "$pkgdir/usr/share/icons/"
-  for file in LICENSE LICENSE-MIT LICENSE-APACHE NOTICE COPYRIGHT; do
+  for file in LICENSE LICENSE-MIT LICENSE-APACHE NOTICE COPYRIGHT ATTRIBUTION.md THIRD-PARTY-LICENSES.txt; do
     [[ ! -f "$file" ]] || install -Dm644 "$file" "$pkgdir/usr/share/licenses/$pkgname/$file"
+  done
+  if [[ -f docs/brand/LICENSE-brand.txt ]]; then
+    install -Dm644 docs/brand/LICENSE-brand.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE-brand.txt"
+  fi
+  for file in assets/fonts/*/OFL.txt assets/fonts/OFL-*.txt; do
+    [[ ! -f "$file" ]] || install -Dm644 "$file" "$pkgdir/usr/share/licenses/$pkgname/$(basename "$(dirname "$file")")-OFL.txt"
   done
   [[ ! -f README.md ]] || install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
   if [[ -n "$_font_commit" ]]; then
