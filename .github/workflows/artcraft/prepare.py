@@ -49,7 +49,7 @@ def previous(repo,app):
 def recipe_hash(config=None):
     config=config or {}
     h=hashlib.sha256(json.dumps(config,sort_keys=True).encode())
-    template='tauri.PKGBUILD.in' if config.get('kind')=='tauri' else 'PKGBUILD.in'
+    template={'tauri':'tauri.PKGBUILD.in','solidcraft':'solidcraft.PKGBUILD.in'}.get(config.get('kind'),'PKGBUILD.in')
     for name in (template,'build.sh','validate.py'):
         h.update(name.encode());h.update((HERE/name).read_bytes())
     return h.hexdigest()
@@ -59,6 +59,11 @@ def build_metadata(config,cargo,repo,sha):
     if config.get('kind')=='tauri':
         tauri=json.loads(content(repo,config['crate_path']+'/tauri.conf.json',sha))
         return str(tauri['version']),str(tauri['identifier']),''
+    if config.get('kind')=='solidcraft':
+        env=content(repo,'packaging/env.sh',sha)
+        match=re.search(r'^APP_ID=([a-zA-Z0-9_.-]+)$',env,re.M)
+        if not match:raise ValueError('Missing upstream SolidCraft application ID')
+        return str(cargo['workspace']['package']['version']),match.group(1),''
     return str(cargo['workspace']['package']['version']),'ai.storyteller.'+binary,font_commit(content(repo,'.github/workflows/release.yml',sha))
 
 def font_commit(workflow):
@@ -147,7 +152,7 @@ def main():
         ENV_PREFIX=config.get('env_prefix',args.app.upper().replace('-','_')),
         DISPLAY_NAME=config.get('display_name',args.app), CRATE_PATH=config.get('crate_path',''),
         LICENSES="'MIT' 'Apache-2.0'" if args.app!='artcraftx' else "'LicenseRef-Upstream-Unspecified'")
-    template='tauri.PKGBUILD.in' if config.get('kind')=='tauri' else 'PKGBUILD.in'
+    template={'tauri':'tauri.PKGBUILD.in','solidcraft':'solidcraft.PKGBUILD.in'}.get(config.get('kind'),'PKGBUILD.in')
     recipe=(HERE/template).read_text()
     for key,value in replacements.items():recipe=recipe.replace('@'+key+'@',value)
     (directory/'PKGBUILD').write_text(recipe)

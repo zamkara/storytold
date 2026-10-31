@@ -40,3 +40,9 @@ FigCraft is built from `storytold/figcraft` as a native Arch Linux package, incl
 its CLI, upstream desktop entry, icons, MIME associations and AppStream metadata.
 The shared builder pins its source revision and upstream font revision, verifies
 source checksums, and publishes it only as part of a complete validated suite.
+
+SolidCraft is the community parametric 3D CAD application from
+`tangency-labs/solidcraft`. Its dedicated source recipe preserves the upstream
+application ID, desktop and MIME integration, exported icons, CLI compatibility
+shim and attribution notices. AniCraft is not registered while its repository
+has no source to build.

@@ -85,5 +85,11 @@
     "repo": "storytold/figcraft",
     "description": "Native interface design and prototyping application",
     "audio": false
+  },
+  "solidcraft": {
+    "repo": "tangency-labs/solidcraft",
+    "description": "Native parametric 3D CAD application",
+    "audio": false,
+    "kind": "solidcraft"
   }
 }

@@ -2,9 +2,9 @@ import json,pathlib,tempfile,unittest
 from unittest.mock import patch
 import registry,prepare
 class RegistryTests(unittest.TestCase):
-    def test_registry_contains_all_fifteen_upstream_apps(self):
+    def test_registry_contains_all_sixteen_upstream_apps(self):
         apps=registry.load_apps()
-        self.assertEqual(len(apps),15)
+        self.assertEqual(len(apps),16)
         self.assertNotIn('artcraft',apps)
         self.assertEqual(apps['artcraft-studio']['repo'],'storytold/artcraft')
         self.assertNotIn('artcraft-launcher',apps)
@@ -64,3 +64,35 @@ class RegistryTests(unittest.TestCase):
             self.assertNotIn('alsa-lib',recipe)
             import subprocess
             subprocess.run(['bash','-n',str(pathlib.Path(folder)/'PKGBUILD')],check=True)
+
+class SolidCraftTests(unittest.TestCase):
+    def test_recipe_uses_upstream_identity_and_layout(self):
+        sha='a'*40
+        def api(path):
+            if path=='repos/tangency-labs/solidcraft':return {'default_branch':'main'}
+            if path=='repos/tangency-labs/solidcraft/commits/main':return {'sha':sha,'commit':{'committer':{'date':'2026-10-31T00:00:00Z'}}}
+            raise AssertionError(path)
+        def content(repo,path,commit):
+            self.assertEqual(repo,'tangency-labs/solidcraft')
+            if path=='Cargo.toml':return '[workspace.package]\nversion="0.28.0"\n'
+            if path=='packaging/env.sh':return 'APP_ID=io.tangencylabs.solidcraft\n'
+            if path=='packaging/linux/package.sh':return 'cargo build --release --locked -p solidcraft -p solidcraft-cli'
+            raise AssertionError(path)
+        with tempfile.TemporaryDirectory() as folder,patch('sys.argv',['prepare.py','solidcraft','--directory',folder]),patch.object(prepare,'api',api),patch.object(prepare,'content',content),patch.object(prepare,'previous',return_value=None),patch.object(prepare,'download_archive',return_value=('source.tar.gz::https://example.com/source','c'*64)) as archive,patch.object(prepare,'notes',return_value='Upstream notes'),patch.object(prepare,'output'):
+            prepare.main()
+            recipe=(pathlib.Path(folder)/'PKGBUILD').read_text()
+            state=json.loads((pathlib.Path(folder)/'upstream.json').read_text())
+            self.assertEqual(state['app_id'],'io.tangencylabs.solidcraft')
+            self.assertEqual(archive.call_count,1)
+            for value in ['-p solidcraft -p solidcraft-cli','assets/platforms/linux/','assets/icons/app/linux/exports/hicolor','release/solvecraft-cli','THIRD-PARTY-LICENSES.txt']:
+                self.assertIn(value,recipe)
+            self.assertNotIn('ai.storyteller.solidcraft',recipe)
+            import subprocess,re
+            self.assertFalse(set(re.findall(r'@[A-Z_]+@',recipe))-{'@VERSION@','@DATE@'})
+            subprocess.run(['bash','-n',str(pathlib.Path(folder)/'PKGBUILD')],check=True)
+
+    def test_unapproved_community_repository_is_rejected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=pathlib.Path(folder)/'apps.json'
+            path.write_text(json.dumps({'solidcraft':{'repo':'other/solidcraft','kind':'solidcraft','description':'CAD'}}))
+            with self.assertRaises(ValueError):registry.load_apps(path)
