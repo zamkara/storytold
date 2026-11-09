@@ -2,13 +2,21 @@ import json,pathlib,tempfile,unittest
 from unittest.mock import patch
 import registry,prepare
 class RegistryTests(unittest.TestCase):
-    def test_registry_contains_all_seventeen_upstream_apps(self):
+    def test_registry_contains_all_supported_upstream_apps(self):
         apps=registry.load_apps()
-        self.assertEqual(len(apps),17)
+        self.assertEqual(len(apps),21)
         self.assertNotIn('artcraft',apps)
         self.assertEqual(apps['artcraft-studio']['repo'],'storytold/artcraft')
         self.assertEqual(apps['artcraft-launcher']['repo'],'storytold/craft-launcher')
         self.assertEqual(apps['figcraft']['repo'],'storytold/figcraft')
+        for name in ['texturecraft','materialcraft','craft-anything','fieldcraft']:
+            self.assertIn(name,apps)
+    def test_pending_apps_are_registered_but_not_built(self):
+        apps=registry.load_apps();all_apps=registry.load_apps(include_pending=True)
+        self.assertEqual(len(all_apps),23)
+        for name in ['anicraft','pcbcraft']:
+            self.assertIn(name,all_apps)
+            self.assertNotIn(name,apps)
     def test_manager_name_is_reserved(self):
         with tempfile.TemporaryDirectory() as folder:
             path=pathlib.Path(folder)/'apps.json';path.write_text(json.dumps({'artcraft':{'repo':'storytold/artcraft','description':'App'}}))
@@ -63,6 +71,32 @@ class RegistryTests(unittest.TestCase):
                 self.assertIn(required,recipe)
             self.assertNotIn('alsa-lib',recipe)
             import subprocess
+            subprocess.run(['bash','-n',str(pathlib.Path(folder)/'PKGBUILD')],check=True)
+
+class FieldCraftTests(unittest.TestCase):
+    def test_recipe_uses_upstream_identity_and_layout(self):
+        sha='a'*40
+        def api(path):
+            if path=='repos/tangency-labs/fieldcraft':return {'default_branch':'develop'}
+            if path=='repos/tangency-labs/fieldcraft/commits/develop':return {'sha':sha,'commit':{'committer':{'date':'2026-11-05T00:00:00Z'}}}
+            raise AssertionError(path)
+        def content(repo,path,commit):
+            self.assertEqual(repo,'tangency-labs/fieldcraft')
+            if path=='Cargo.toml':return '[workspace.package]\nversion="0.7.5"\n'
+            if path=='packaging/env.sh':return 'APP_ID=io.github.tangencylabs.fieldcraft\n'
+            if path=='packaging/linux/package.sh':return 'cargo build --release --locked -p fieldcraft -p fieldcraft-cli'
+            raise AssertionError(path)
+        with tempfile.TemporaryDirectory() as folder,patch('sys.argv',['prepare.py','fieldcraft','--directory',folder]),patch.object(prepare,'api',api),patch.object(prepare,'content',content),patch.object(prepare,'previous',return_value=None),patch.object(prepare,'download_archive',return_value=('source.tar.gz::https://example.com/source','c'*64)),patch.object(prepare,'notes',return_value='Upstream notes'),patch.object(prepare,'output'):
+            prepare.main()
+            recipe=(pathlib.Path(folder)/'PKGBUILD').read_text()
+            state=json.loads((pathlib.Path(folder)/'upstream.json').read_text())
+            self.assertEqual(state['app_id'],'io.github.tangencylabs.fieldcraft')
+            self.assertTrue(state['cli']);self.assertFalse(state['mime'])
+            for value in ['-p fieldcraft -p fieldcraft-cli','usr/bin/fieldcraft-cli','assets/app-icon/icon.iconset','packaging/linux/$app_id.metainfo.xml','DISCLAIMER.md']:
+                self.assertIn(value,recipe)
+            self.assertNotIn('mime/packages',recipe)
+            import subprocess,re
+            self.assertFalse(set(re.findall(r'@[A-Z_]+@',recipe))-{'@VERSION@','@DATE@'})
             subprocess.run(['bash','-n',str(pathlib.Path(folder)/'PKGBUILD')],check=True)
 
 class SolidCraftTests(unittest.TestCase):

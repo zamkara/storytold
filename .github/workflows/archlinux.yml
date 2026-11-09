@@ -36,6 +36,7 @@ jobs:
           python3 -m unittest discover -s .github/workflows/artcraft -p 'test_*.py' -v
           bash -n .github/workflows/artcraft/build.sh
           bash -n .github/workflows/artcraft/tauri.PKGBUILD.in
+          bash -n .github/workflows/artcraft/fieldcraft.PKGBUILD.in
           bash -n .github/workflows/artcraft/manager-build.sh
           bash -n .github/workflows/artcraft/install.sh.in
           python3 -m py_compile .github/workflows/artcraft/manager_prepare.py .github/workflows/artcraft/suite_publish.py

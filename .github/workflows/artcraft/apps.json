@@ -71,6 +71,22 @@
     "audio": false,
     "package_updater": true
   },
+  "texturecraft": {
+    "repo": "storytold/texturecraft",
+    "description": "Native 3D texture painting application",
+    "audio": false
+  },
+  "materialcraft": {
+    "repo": "storytold/materialcraft",
+    "description": "Native procedural material design application",
+    "audio": false
+  },
+  "craft-anything": {
+    "repo": "storytold/craft-anything",
+    "description": "Understand how any software works and craft your own",
+    "audio": false,
+    "mime": false
+  },
   "artcraft-studio": {
     "repo": "storytold/artcraft",
     "description": "ArtCraft Studio AI image, video and interactive creation application",
@@ -105,6 +121,25 @@
     "audio": false,
     "kind": "solidcraft",
     "package_updater": "solidcraft"
+  },
+  "fieldcraft": {
+    "repo": "tangency-labs/fieldcraft",
+    "description": "Native finite element modeling and analysis application",
+    "audio": false,
+    "kind": "fieldcraft",
+    "mime": false
+  },
+  "anicraft": {
+    "repo": "storytold/anicraft",
+    "description": "Native 2D vector animation application",
+    "audio": true,
+    "pending": true
+  },
+  "pcbcraft": {
+    "repo": "tangency-labs/pcbcraft",
+    "description": "Native electronics design automation application",
+    "audio": false,
+    "pending": true
   },
   "artcraft-launcher": {
     "repo": "storytold/craft-launcher",

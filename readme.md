@@ -13,8 +13,10 @@ artcraft -i wordcraft soundcraft
 ```
 
 Supported packages: `designcraft`, `effectcraft`, `pdfcraft`, `lightcraft`,
-`filmcraft`, `vectorcraft`, `photocraft`, `cadcraft`, `deckcraft`, `gridcraft`,
-`soundcraft`, `wordcraft`, `artcraft-studio`, and `artcraftx`.
+`filmcraft`, `vectorcraft`, `photocraft`, `figcraft`, `cadcraft`, `deckcraft`,
+`gridcraft`, `soundcraft`, `wordcraft`, `texturecraft`, `materialcraft`,
+`craft-anything`, `fieldcraft`, `solidcraft`, `artcraft-studio`, `artcraftx`,
+and `artcraft-launcher`.
 
 The command remains `artcraft`. `artcraft-studio` is the upstream AI desktop app;
 `artcraftx` is experimental. Upstream repositories are checked daily; changed
