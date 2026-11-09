@@ -26,6 +26,9 @@ def transform(lib,updater):
         return serde_json::from_slice(&result.stdout).map_err(|e| format!("invalid native release: {e}"));
     }
 '''
+    # craft-update 0.1.0 changed relaunch_after_exit from Result<(), String> to Restart.
+    restart='relaunch_after_exit(app, std::process::id(), &[exe.as_os_str()])'
+    if re.search(r'fn relaunch_after_exit\([^{}]*?\) -> Restart',updater):restart+='.start()'
     install='''
     #[cfg(target_os = "linux")]
     if let (Some(helper), Some(package)) = (option_env!("ARTCRAFT_PACKAGE_BRIDGE"), option_env!("ARTCRAFT_PACKAGE_NAME")) {
@@ -39,9 +42,9 @@ def transform(lib,updater):
         }
         let exe = std::env::current_exe().map_err(|e| format!("could not locate application: {e}"))?;
         mark_installed(paths, release);
-        return relaunch_after_exit(app, std::process::id(), &[exe.as_os_str()]);
+        return @RESTART@;
     }
-'''
+'''.replace('@RESTART@',restart)
     lib=inject(lib,r'pub fn check_for_update\([^{}]*?\) -> Result<Option<Release>, String> \{',check)
     updater=inject(updater,r'pub fn update\([^{}]*?\) -> Result<\(\), String> \{',install)
     return lib,updater

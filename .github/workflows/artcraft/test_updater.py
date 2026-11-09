@@ -18,6 +18,12 @@ class UpdaterTests(unittest.TestCase):
         self.assertLess(updater.index('!result.status.success()'),updater.index('mark_installed'))
         self.assertIn('relaunch_after_exit',updater)
 
+    def test_restart_return_type_starts_the_helper(self):
+        lib='pub fn check_for_update(app: &App, http: &Http, current_version: &str) -> Result<Option<Release>, String> {\nORIGINAL_CHECK\n}'
+        updater='fn relaunch_after_exit(app: &App, pid: u32, command: &[&std::ffi::OsStr]) -> Restart {\nORIGINAL_RESTART\n}\npub fn update(app: &App, install: &Install, release: &Release, platform: Platform, http: &Http, paths: &Paths, stop: &Stop, phase: &mut dyn FnMut(JobPhase), last: &dyn Fn() -> Result<(), String>, running_version: Option<&str>) -> Result<(), String> {\nORIGINAL_REPLACE\n}'
+        _,updater=patch_updater.transform(lib,updater)
+        self.assertIn('return relaunch_after_exit(app, std::process::id(), &[exe.as_os_str()]).start();',updater)
+
     def test_cancelled_authentication_does_not_report_success(self):
         with patch.object(bridge.subprocess,'run',return_value=subprocess.CompletedProcess([],126,'','Authorization cancelled')):
             with self.assertRaisesRegex(RuntimeError,'Authorization cancelled'):bridge.run(['artcraft','-u','figcraft'])
