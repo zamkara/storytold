@@ -38,7 +38,7 @@ build() {
   _build_env
   (cd frontend && npm ci --no-audit --no-fund --allow-git=all --allow-remote=all --dangerously-allow-all-scripts && ./node_modules/.bin/nx run artcraft:build --skip-nx-cache --parallel=2)
   test -s frontend/apps/artcraft/dist/index.html
-  cargo build --release --locked -p @BINARY@ --features tauri/custom-protocol
+  cargo build --release -p @BINARY@ --features tauri/custom-protocol
 }
 check() {
   test -x "$startdir/.cache/target/release/@BINARY@"
