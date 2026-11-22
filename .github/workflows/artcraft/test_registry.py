@@ -118,7 +118,7 @@ class SolidCraftTests(unittest.TestCase):
             state=json.loads((pathlib.Path(folder)/'upstream.json').read_text())
             self.assertEqual(state['app_id'],'io.tangencylabs.solidcraft')
             self.assertEqual(archive.call_count,1)
-            for value in ['-p solidcraft -p solidcraft-cli','assets/platforms/linux/','assets/icons/app/linux/exports/hicolor','release/solvecraft-cli','THIRD-PARTY-LICENSES.txt']:
+            for value in ['-p solidcraft -p solidcraft-cli','assets/platforms/linux/','assets/icons/app/linux/exports/hicolor','release/solidcraft-cli','THIRD-PARTY-LICENSES.txt']:
                 self.assertIn(value,recipe)
             self.assertNotIn('ai.storyteller.solidcraft',recipe)
             import subprocess,re

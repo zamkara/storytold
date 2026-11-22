@@ -58,7 +58,6 @@ package() {
   local app_id=@APP_ID@ file font
   install -Dm755 "$CARGO_TARGET_DIR/release/@BINARY@" "$pkgdir/usr/bin/$pkgname"
 @CLI_INSTALL@
-  install -Dm755 "$CARGO_TARGET_DIR/release/solvecraft-cli" "$pkgdir/usr/bin/solvecraft-cli"
   install -Dm644 "assets/platforms/linux/$app_id.desktop" "$pkgdir/usr/share/applications/$app_id.desktop"
   install -Dm644 "assets/platforms/linux/$app_id.mime.xml" "$pkgdir/usr/share/mime/packages/$app_id.xml"
   install -d "$pkgdir/usr/share/metainfo" "$pkgdir/usr/share/icons"
