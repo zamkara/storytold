@@ -28,7 +28,7 @@ def transform(lib,updater):
 '''
     # craft-update 0.1.0 changed relaunch_after_exit from Result<(), String> to Restart.
     restart='relaunch_after_exit(app, std::process::id(), &[exe.as_os_str()])'
-    if re.search(r'fn relaunch_after_exit\([^{}]*?\) -> Restart',updater):restart+='.start()'
+    if 'pub struct Restart' in updater or re.search(r'fn relaunch_after_exit\([^{}]*?\) -> Restart',updater):restart+='.start()'
     install='''
     #[cfg(target_os = "linux")]
     if let (Some(helper), Some(package)) = (option_env!("ARTCRAFT_PACKAGE_BRIDGE"), option_env!("ARTCRAFT_PACKAGE_NAME")) {
